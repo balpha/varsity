@@ -1,0 +1,7 @@
+# use glob syntax
+syntax: glob
+
+# Ignore patterns
+glob:.idea/workspace.xml
+glob:.idea/tasks.xml
+glob:out/*

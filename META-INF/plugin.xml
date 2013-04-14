@@ -1,0 +1,38 @@
+<idea-plugin version="2">
+  <id>de.balpha.varsity</id>
+  <name>Varsity</name>
+  <version>0.3</version>
+  <vendor url="http://balpha.de">Benjamin Dumke-von der Ehe</vendor>
+
+  <description><![CDATA[
+    Folds redundant type information in local variable declarations (including for and foreach loops) to just display "var".
+    Conversely, if you enter "var" as the type in a local variable declaration, a for loop, or a foreach loop,
+    replaces the "var" with the actual type once you press Enter.
+      ]]></description>
+
+  <!-- please see http://confluence.jetbrains.net/display/IDEADEV/Build+Number+Ranges for description -->
+  <idea-version since-build="107.105"/>
+
+  <!-- please see http://confluence.jetbrains.net/display/IDEADEV/Plugin+Compatibility+with+IntelliJ+Platform+Products
+       on how to target different products -->
+  <!-- uncomment to enable plugin in all products
+  <depends>com.intellij.modules.lang</depends>
+  -->
+
+  <application-components>
+    <!-- Add your application components here -->
+  </application-components>
+
+  <project-components>
+    <!-- Add your project components here -->
+  </project-components>
+
+  <actions>
+    <!-- Add your actions here -->
+  </actions>
+
+  <extensions defaultExtensionNs="com.intellij">
+      <lang.foldingBuilder language="JAVA" implementationClass="de.balpha.varsity.VarFoldingBuilder"/>
+      <enterHandlerDelegate implementation="de.balpha.varsity.VarExpander" order="first" />
+  </extensions>
+</idea-plugin>
