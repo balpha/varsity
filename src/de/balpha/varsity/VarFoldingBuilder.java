@@ -5,6 +5,7 @@ import com.intellij.lang.folding.FoldingBuilderEx;
 import com.intellij.lang.folding.FoldingDescriptor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.FoldingGroup;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -57,9 +58,10 @@ public class VarFoldingBuilder extends FoldingBuilderEx {
 
                 doFold |= rightType.equals(vartype);
 
+                TextRange range = typeElem.getTextRange();
 
-                if (doFold) {
-                    descriptors.add(new FoldingDescriptor(typeElem.getNode(), typeElem.getTextRange(), group));
+                if (doFold && rangeMakesSenseToFold(range)) {
+                    descriptors.add(new FoldingDescriptor(typeElem.getNode(), range, group));
                 }
             }
 
@@ -72,11 +74,17 @@ public class VarFoldingBuilder extends FoldingBuilderEx {
                         ||
                         (iterType instanceof PsiArrayType && ((PsiArrayType)iterType).getComponentType().equals(vartype))
                     ) {
-                    descriptors.add(new FoldingDescriptor(iter.getIterationParameter().getTypeElement().getNode(), iter.getIterationParameter().getTypeElement().getTextRange(), group));
+                    TextRange range = iter.getIterationParameter().getTypeElement().getTextRange();
+                    if (rangeMakesSenseToFold(range))
+                        descriptors.add(new FoldingDescriptor(iter.getIterationParameter().getTypeElement().getNode(), range, group));
                 }
             }
         }
         return descriptors.toArray(new FoldingDescriptor[descriptors.size()]);
+    }
+
+    private static boolean rangeMakesSenseToFold(TextRange range) {
+        return range.getLength() >= 3; // this will fold int to var -- I can see points for and against that
     }
 
     private static boolean isIterableOf(PsiClassType iter, PsiType var) {
