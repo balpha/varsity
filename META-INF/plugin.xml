@@ -1,7 +1,7 @@
 <idea-plugin version="2">
   <id>de.balpha.varsity</id>
   <name>Varsity</name>
-  <version>0.3.1</version>
+  <version>0.3.2</version>
   <vendor url="http://balpha.de">Benjamin Dumke-von der Ehe</vendor>
 
   <description><![CDATA[
@@ -34,5 +34,6 @@
   <extensions defaultExtensionNs="com.intellij">
       <lang.foldingBuilder language="JAVA" implementationClass="de.balpha.varsity.VarFoldingBuilder"/>
       <enterHandlerDelegate implementation="de.balpha.varsity.VarExpander" order="first" />
+      <applicationConfigurable instance="de.balpha.varsity.VarsityConfigurable" />
   </extensions>
 </idea-plugin>

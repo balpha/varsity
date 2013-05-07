@@ -1,5 +1,6 @@
 package de.balpha.varsity;
 
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.folding.FoldingBuilderEx;
 import com.intellij.lang.folding.FoldingDescriptor;
@@ -16,10 +17,15 @@ import java.util.Collection;
 import java.util.List;
 
 public class VarFoldingBuilder extends FoldingBuilderEx {
+
+    private static int mMinChars;
+
     @NotNull
     @Override
     public FoldingDescriptor[] buildFoldRegions(@NotNull PsiElement root, @NotNull Document document, boolean quick) {
 
+        boolean noFoldPrimitives = !PropertiesComponent.getInstance().getBoolean("foldprimitives", true);
+        mMinChars = PropertiesComponent.getInstance().getOrInitInt("minchars", 3);
 
         List<FoldingDescriptor> descriptors = new ArrayList<FoldingDescriptor>();
 
@@ -44,6 +50,9 @@ public class VarFoldingBuilder extends FoldingBuilderEx {
                 PsiType rightType = initializer.getType();
 
                 if (rightType == null)
+                    continue;
+
+                if (noFoldPrimitives && !(rightType instanceof PsiClassType || rightType instanceof PsiArrayType))
                     continue;
 
                 boolean doFold = false;
@@ -84,7 +93,7 @@ public class VarFoldingBuilder extends FoldingBuilderEx {
     }
 
     private static boolean rangeMakesSenseToFold(TextRange range) {
-        return range.getLength() >= 3; // this will fold int to var -- I can see points for and against that
+        return range.getLength() >= mMinChars;
     }
 
     private static boolean isIterableOf(PsiClassType iter, PsiType var) {
