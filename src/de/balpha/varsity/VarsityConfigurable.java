@@ -49,14 +49,16 @@ public class VarsityConfigurable implements Configurable {
     public boolean isModified() {
         return mProps.getBoolean("foldprimitives", true) != mForm.getFoldPrimitives()
                 ||
-            mProps.getOrInitInt("minchars", 3) != mForm.getMinChars();
-
+            mProps.getOrInitInt("minchars", 3) != mForm.getMinChars()
+                ||
+            mProps.getBoolean("val", false) != mForm.getVal();
     }
 
     @Override
     public void apply() throws ConfigurationException {
         mProps.setValue("foldprimitives", mForm.getFoldPrimitives() ? "true" : "false");
         mProps.setValue("minchars", mForm.getMinChars() + "");
+        mProps.setValue("val", mForm.getVal() ? "true" : "false");
 
         // the following is copied from https://github.com/JetBrains/intellij-community/blob/master/platform/lang-impl/src/com/intellij/application/options/editor/CodeFoldingConfigurable.java
         final List<Pair<Editor, Project>> toUpdate = new ArrayList<Pair<Editor, Project>>();
@@ -88,6 +90,7 @@ public class VarsityConfigurable implements Configurable {
     public void reset() {
         mForm.setFoldPrimitives(mProps.getBoolean("foldprimitives", true));
         mForm.setMinChars(mProps.getOrInitInt("minchars", 3));
+        mForm.setVal(mProps.getBoolean("val", false));
     }
 
     @Override

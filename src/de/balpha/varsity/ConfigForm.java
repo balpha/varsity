@@ -10,6 +10,7 @@ public class ConfigForm {
     private JCheckBox cbPrimitive;
     private JPanel panel;
     private JTextField tfMinChars;
+    private JCheckBox cbVal;
 
     public void setVerifier() {
         tfMinChars.setInputVerifier(new InputVerifier() {
@@ -34,6 +35,14 @@ public class ConfigForm {
 
     public void setFoldPrimitives(boolean yesno) {
         cbPrimitive.setSelected(yesno);
+    }
+
+    public boolean getVal() {
+        return cbVal.isSelected();
+    }
+
+    public void setVal(boolean yesno) {
+        cbVal.setSelected(yesno);
     }
 
     public int getMinChars() {

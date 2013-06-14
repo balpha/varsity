@@ -1,6 +1,7 @@
 package de.balpha.varsity;
 
 import com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegateAdapter;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
@@ -22,9 +23,16 @@ public class VarExpander extends EnterHandlerDelegateAdapter {
 
         final PsiElement onCursor = file.findElementAt(caretOffset.get());
 
+        boolean handleVal = PropertiesComponent.getInstance().getBoolean("val", false);
+
         for (PsiTypeElement element : PsiTreeUtil.findChildrenOfType(file, PsiTypeElement.class)) {
-            if (!element.getType().getCanonicalText().equals("var"))
-                continue;
+            boolean isVal = false;
+
+            if (!element.getType().getCanonicalText().equals("var")) {
+                if (!handleVal || !element.getType().getCanonicalText().equals("val"))
+                    continue;
+                isVal = true;
+            }
             if (element.getTextOffset() > caretOffset.get())
                 continue;
 
@@ -36,7 +44,8 @@ public class VarExpander extends EnterHandlerDelegateAdapter {
                     continue;
 
                 final PsiLocalVariable locVar = (PsiLocalVariable)dec.getChildren()[0];
-                if (!locVar.getType().getCanonicalText().equals("var"))
+                String typeText = locVar.getType().getCanonicalText();
+                if (!(typeText.equals("var") || typeText.equals("val")))
                     continue;
 
                 PsiExpression init = locVar.getInitializer();
@@ -44,14 +53,14 @@ public class VarExpander extends EnterHandlerDelegateAdapter {
                     continue;
 
                 PsiType rightType = init.getType();
-                replace(locVar.getTypeElement(), rightType, editor, file, onCursor, caretOffset);
+                replace(locVar, rightType, editor, file, onCursor, caretOffset, isVal);
                 continue;
             }
 
             PsiForeachStatement forEachStatement = getAncestorOfType(element, PsiForeachStatement.class);
 
             if (forEachStatement != null && element.equals(forEachStatement.getIterationParameter().getTypeElement())) {
-                PsiTypeElement var = forEachStatement.getIterationParameter().getTypeElement();
+                PsiParameter var = forEachStatement.getIterationParameter();
                 PsiType iterType = (PsiType)forEachStatement.getIteratedValue().getType();
 
                 PsiType iteratedType;
@@ -62,11 +71,7 @@ public class VarExpander extends EnterHandlerDelegateAdapter {
                 else
                     continue;
 
-                replace(var, iteratedType, editor, file, onCursor, caretOffset);
-
-
-
-
+                replace(var, iteratedType, editor, file, onCursor, caretOffset, isVal);
             }
         }
         return Result.Continue;
@@ -98,7 +103,7 @@ public class VarExpander extends EnterHandlerDelegateAdapter {
     }
 
 
-    private static void replace(PsiTypeElement var, PsiType realType, Editor editor, PsiFile file, PsiElement refElement, Ref<Integer> caretOffset) {
+    private static void replace(PsiVariable var, PsiType realType, Editor editor, PsiFile file, PsiElement refElement, Ref<Integer> caretOffset, boolean makeFinal) {
         if(realType == null)
             return;
         if (realType instanceof PsiClassReferenceType && ((PsiClassReferenceType) realType).resolve() == null)
@@ -109,7 +114,10 @@ public class VarExpander extends EnterHandlerDelegateAdapter {
         PsiTypeElement copy = factory.createTypeElement(realType);
 
         int old = refElement.getTextOffset();
-        var.replace(copy);
+        var.getTypeElement().replace(copy);
+        if (makeFinal)
+            var.getModifierList().setModifierProperty("final", true);
+
         if (realType instanceof PsiClassType) {
             PsiElement ref = ((PsiJavaFile)file).findImportReferenceTo(((PsiClassType) realType).resolve());
 

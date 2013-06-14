@@ -6,6 +6,7 @@ import com.intellij.lang.folding.FoldingBuilderEx;
 import com.intellij.lang.folding.FoldingDescriptor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.FoldingGroup;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -26,6 +27,7 @@ public class VarFoldingBuilder extends FoldingBuilderEx {
 
         boolean noFoldPrimitives = !PropertiesComponent.getInstance().getBoolean("foldprimitives", true);
         mMinChars = PropertiesComponent.getInstance().getOrInitInt("minchars", 3);
+        boolean foldToVal = PropertiesComponent.getInstance().getBoolean("val", false);
 
         List<FoldingDescriptor> descriptors = new ArrayList<FoldingDescriptor>();
 
@@ -67,25 +69,32 @@ public class VarFoldingBuilder extends FoldingBuilderEx {
 
                 doFold |= rightType.equals(vartype);
 
-                TextRange range = typeElem.getTextRange();
+                Ref<TextRange> range = new Ref<TextRange>(typeElem.getTextRange());
+                Ref<ASTNode> node = new Ref<ASTNode>(typeElem.getNode());
 
-                if (doFold && rangeMakesSenseToFold(range)) {
-                    descriptors.add(new FoldingDescriptor(typeElem.getNode(), range, group));
+                if (foldToVal)
+                    checkFoldToVal(var, range, node);
+
+                if (doFold && rangeMakesSenseToFold(range.get())) {
+                    descriptors.add(new FoldingDescriptor(node.get(), range.get(), group));
                 }
             }
 
             for (final PsiForeachStatement iter : iters) {
-                
-                PsiType vartype = iter.getIterationParameter().getType();
+                PsiParameter param = iter.getIterationParameter();
+                PsiType vartype = param.getType();
                 PsiType iterType = (PsiType)iter.getIteratedValue().getType();
 
                 if ((iterType instanceof PsiClassType && isIterableOf((PsiClassType)iterType, vartype))
                         ||
                         (iterType instanceof PsiArrayType && ((PsiArrayType)iterType).getComponentType().equals(vartype))
                     ) {
-                    TextRange range = iter.getIterationParameter().getTypeElement().getTextRange();
-                    if (rangeMakesSenseToFold(range))
-                        descriptors.add(new FoldingDescriptor(iter.getIterationParameter().getTypeElement().getNode(), range, group));
+                    Ref<TextRange> range = new Ref<TextRange>(param.getTypeElement().getTextRange());
+                    Ref<ASTNode> node = new Ref<ASTNode>(param.getTypeElement().getNode());
+                    if (foldToVal)
+                        checkFoldToVal(param, range, node);
+                    if (rangeMakesSenseToFold(range.get()))
+                        descriptors.add(new FoldingDescriptor(node.get(), range.get(), group));
                 }
             }
         }
@@ -94,6 +103,16 @@ public class VarFoldingBuilder extends FoldingBuilderEx {
 
     private static boolean rangeMakesSenseToFold(TextRange range) {
         return range.getLength() >= mMinChars;
+    }
+
+    private static void checkFoldToVal(PsiVariable var, Ref<TextRange> range, Ref<ASTNode> node) {
+        PsiModifierList modifiers = ((PsiVariable) var).getModifierList();
+
+        if (modifiers != null && modifiers.getChildren().length == 1 && modifiers.hasExplicitModifier("final")) {
+            range.set(range.get().union(modifiers.getTextRange()));
+            node.set(modifiers.getFirstChild().getNode());
+        }
+
     }
 
     private static boolean isIterableOf(PsiClassType iter, PsiType var) {
@@ -110,6 +129,8 @@ public class VarFoldingBuilder extends FoldingBuilderEx {
     @Nullable
     @Override
     public String getPlaceholderText(@NotNull ASTNode node) {
+        if (node instanceof PsiKeyword && node.getText().equals("final"))
+            return "val";
         return "var";
     }
 

@@ -1,13 +1,14 @@
 <idea-plugin version="2">
   <id>de.balpha.varsity</id>
   <name>Varsity</name>
-  <version>0.3.2</version>
+  <version>0.3.3</version>
   <vendor url="http://balpha.de">Benjamin Dumke-von der Ehe</vendor>
 
   <description><![CDATA[
     Folds redundant type information in local variable declarations (including for and foreach loops) to just display "var".
     Conversely, if you enter "var" as the type in a local variable declaration, a for loop, or a foreach loop,
-    replaces the "var" with the actual type once you press Enter.
+    replaces the "var" with the actual type once you press Enter. Can also handle "val" in the same way, just for final variables
+    (this is disabled by default).
       ]]></description>
 
   <!-- please see http://confluence.jetbrains.net/display/IDEADEV/Build+Number+Ranges for description -->
