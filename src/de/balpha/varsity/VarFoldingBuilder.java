@@ -116,8 +116,20 @@ public class VarFoldingBuilder extends FoldingBuilderEx {
     }
 
     private static boolean isIterableOf(PsiClassType iter, PsiType var) {
-        if (iter.resolve() != null && "java.lang.Iterable".equals(iter.resolve().getQualifiedName()) && iter.getParameters()[0].equals(var))
-            return true;
+        if (iter.resolve() != null
+                && "java.lang.Iterable".equals(iter.resolve().getQualifiedName())) {
+
+            if (iter.getParameters().length > 0) {
+                return iter.getParameters()[0].equals(var);
+            } else {
+                if (var instanceof PsiClassType) {
+                    PsiClass resolved = ((PsiClassType) var).resolve();
+                    return resolved != null && "java.lang.Object".equals(resolved.getQualifiedName());
+                }
+                return false;
+            }
+        }
+
         for (PsiType interf : iter.getSuperTypes()) {
             if (interf instanceof PsiClassType && isIterableOf((PsiClassType)interf, var))
                 return true;

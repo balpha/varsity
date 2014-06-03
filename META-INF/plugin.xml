@@ -1,7 +1,7 @@
 <idea-plugin version="2">
   <id>de.balpha.varsity</id>
   <name>Varsity</name>
-  <version>0.3.4</version>
+  <version>0.3.5</version>
   <vendor url="http://balpha.de">Benjamin Dumke-von der Ehe</vendor>
 
   <description><![CDATA[

@@ -64,12 +64,15 @@ public class VarExpander extends EnterHandlerDelegateAdapter {
                 PsiType iterType = (PsiType)forEachStatement.getIteratedValue().getType();
 
                 PsiType iteratedType;
-                if (iterType instanceof PsiArrayType)
+                if (iterType instanceof PsiArrayType) {
                     iteratedType = ((PsiArrayType) iterType).getComponentType();
-                else if (iterType instanceof PsiClassType)
+                } else if (iterType instanceof PsiClassType) {
                     iteratedType = getIteratedType((PsiClassType)iterType);
-                else
+                    if (iteratedType == null)
+                        iteratedType = PsiClassType.getJavaLangObject(PsiManager.getInstance(file.getProject()), iterType.getResolveScope());
+                } else {
                     continue;
+                }
 
                 replace(var, iteratedType, editor, file, onCursor, caretOffset, isVal);
             }
@@ -88,7 +91,9 @@ public class VarExpander extends EnterHandlerDelegateAdapter {
     }
 
     private PsiType getIteratedType(PsiClassType iter) {
-        if (iter.resolve() != null && "java.lang.Iterable".equals(iter.resolve().getQualifiedName()))
+        if (iter.resolve() != null
+                && "java.lang.Iterable".equals(iter.resolve().getQualifiedName())
+                && iter.getParameters().length > 0)
             return iter.getParameters()[0];
         for (PsiType interf : iter.getSuperTypes()) {
             if (interf instanceof PsiClassType) {
